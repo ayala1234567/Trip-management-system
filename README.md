@@ -2,7 +2,7 @@
 
 ## Project Information
 
-* **Project Name:** Hadassim Trip Manager
+* **Project Name:** Trip management system
 * **Purpose:** School Trip Management and Real-Time Tracking System
 
 ---

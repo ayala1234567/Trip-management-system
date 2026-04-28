@@ -1,4 +1,4 @@
-# Hadassim Trip Manager
+# Trip management system
 
 ## Project Information
 

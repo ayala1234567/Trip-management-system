@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Student location</title>  
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
+        #map { width: 100%; height: 500px; border: 1px solid black; }    
+        
+        .student-dot-normal {
+            width: 10px; height: 10px; background-color: blue;
+            border-radius: 50%; border: 1px solid white;
+        }
+        
+        .student-dot-far {
+            width: 12px; height: 12px; background-color: red;
+            border-radius: 50%; border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+    <fieldset id="control-panel" style="width: 400px;">
+    <legend>Tracking Management</legend>
+    
+    <div id="all-students-area">
+        <input id="teacher_id" placeholder="Teacher ID" type="number">
+        <button onclick="startTracking()">Start Tracking</button>
+    </div>
+
+    <div id="certain-class" style="display:none;">
+        <span id="active-teacher"></span> | 
+        <button onclick="stopTracking()">Stop Tracking</button>
+        <div style="color:red; font-weight:bold;">Active Distance Alert (3 km)</div>
+    </div>
+</fieldset>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        const map = L.map('map').setView([31.8, 35.1], 9);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let TeacherId = null;
+        let activeMarkers = {};
+        let teacherMarker = null;
+
+        const iconBlue = L.divIcon({ className: '', html: '<div class="student-dot-normal"></div>', iconSize: [10, 10], iconAnchor: [5, 5] });
+        const iconRed = L.divIcon({ className: '', html: '<div class="student-dot-far"></div>', iconSize: [12, 12], iconAnchor: [6, 6] });
+
+        function startTracking() {
+            const id = document.getElementById('teacher_id').value;
+            if (!id) return alert("Please enter a Teacher ID");
+            TeacherId = id;
+            document.getElementById('all-students-area').style.display = 'none';
+            document.getElementById('certain-class').style.display = 'block';
+            document.getElementById('active-teacher').innerText = "teacher: " + id;
+
+            clearAllMarkers();
+            fetchAndUpdate(); 
+        }
+
+        function stopTracking() {
+            TeacherId = null;
+            document.getElementById('all-students-area').style.display = 'block';
+            document.getElementById('certain-class').style.display = 'none';
+            clearAllMarkers();
+            fetchAndUpdate();
+        }
+
+        function clearAllMarkers() {
+            for (let id in activeMarkers) {
+                map.removeLayer(activeMarkers[id]);
+            }
+            if (teacherMarker) {
+                map.removeLayer(teacherMarker);
+            }
+            activeMarkers = {};
+            teacherMarker = null;
+        }
+
+      async function fetchAndUpdate() {
+            let url;
+
+            if (TeacherId) {
+                url = "/api/tracking/" + TeacherId;
+            } 
+            else {
+                url = "/api/locations";
+            }
+
+            try {
+                const response = await fetch(url); 
+                if (!response.ok) {  
+                    return;
+                }
+
+                const data = await response.json();
+                if (TeacherId) {
+                    updateMapElements(data.students, data.teacher_location);
+                } else {
+                    updateMapElements(data, null);
+                }
+            } catch (e) {
+                console.error("Error:", e);
+            }
+}
+        function updateMapElements(students, teacher_location) {
+            if (teacher_location) {
+                if (!teacherMarker) {
+                    teacherMarker = L.circleMarker([teacher_location.lat, teacher_location.lng], { color: 'orange', radius: 8 }).addTo(map);
+                    teacherMarker.bindTooltip("Teacher", { permanent: true });
+                } else {
+                    teacherMarker.setLatLng([teacher_location.lat, teacher_location.lng]);
+                }
+            }
+
+            for (let id in students) {
+
+                let Data = students[id]; 
+                const loc = [Data.lat, Data.lng];
+                let isTooFar = false;
+
+                if (teacher_location) {
+                    const dist = map.distance(teacher_location, loc);
+                    isTooFar = dist > 3000;
+                }
+
+                const currentIcon = isTooFar ? iconRed : iconBlue;
+
+                if (activeMarkers[id]) {
+
+                    activeMarkers[id].setLatLng(loc);
+                    activeMarkers[id].setIcon(currentIcon);
+                } else {
+
+                    activeMarkers[id] = L.marker(loc, { icon: currentIcon }).addTo(map);
+                    activeMarkers[id].bindTooltip(Data.full_name, { permanent: true });
+                }
+            }
+        }
+
+        setInterval(fetchAndUpdate, 3000);
+    </script>
+</body>
+</html>

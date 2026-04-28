@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration</title>
+    <style>
+        body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+
+    <h1>User registration </h1>
+
+    <a href="map.html" target="_blank" >View student locations</a>
+    <br>
+
+    <h2>Register New Teacher</h2>
+    <form id="teacher"> 
+        <div >
+            <label>ID Number:</label>
+            <input id="t_id" required>
+        </div>
+        <br>
+        <div>
+            <label>Full Name:</label>
+            <input id="t_name" required>
+        </div>
+        <br>
+        <div>
+            <label>Grade:</label>
+            <input id="t_class" required>
+        </div>
+        <br>
+        <button type="button"  onclick="registerTeacher()">Register Teacher</button>
+    </form>
+   
+
+    <h2>Register New Student</h2>
+    <form id="student">
+        <div>
+            <label>ID Number:</label>
+            <input id="s_id" required>
+        </div>
+        <br>
+        <div>
+            <label>Full Name:</label>
+            <input id="s_name" required>
+        </div>
+        <br>
+        <div>
+            <label>Grade:</label>
+            <input id="s_class" required>
+        </div>
+        <br>
+        <div>
+            <label>Assigned Teacher ID:</label>
+            <input id="s_teacher" required>
+        </div>
+        <br>
+        <button type="button" onclick="registerStudent()">Register Student</button>
+    </form>
+
+
+    <script>
+        async function sendData(path, data) {
+            try {
+                const response = await fetch(path, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert("User added successfully");
+                    window.location.reload();   
+                } else {
+                    alert("Error");
+                }
+            } catch (e) {
+                alert("Error");
+            }
+        }
+
+        
+        async function registerTeacher() {
+            const data = {
+                teacher_id: window.document.getElementById('t_id').value,
+                full_name: window.document.getElementById('t_name').value,
+                grade_class: window.document.getElementById('t_class').value
+            };
+            
+            await sendData('/api/teachers', data);
+        }
+
+        async function registerStudent() {
+            const data = {
+                student_id: window.document.getElementById('s_id').value,
+                full_name: window.document.getElementById('s_name').value,
+                grade_class: window.document.getElementById('s_class').value,
+                assigned_teacher_id: window.document.getElementById('s_teacher').value
+            };
+            
+            await sendData('/api/students', data);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+

@@ -239,8 +239,8 @@ To help teachers focus on their specific group, the system allows filtering by c
 ### 1. Clone the project
 
 ```bash
-git clone "קישור של הפרויקט"
-cd HADASSIM-TRIP-MANAGER
+git clone https://github.com/ayala1234567/Trip-management-system.git
+cd Trip-management-system
 ```
 
 ### 2. Install dependencies
